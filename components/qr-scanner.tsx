@@ -26,6 +26,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
 
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const scannedCodesRef = useRef<Set<string>>(new Set())
   const controlsRef = useRef<any>(null)
 
@@ -82,6 +83,35 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
           (result, err) => {
             if (result) {
               const text = result.getText()
+              // Draw result points on canvas
+              const videoElement = videoRef.current
+              const canvasElement = canvasRef.current
+
+              if (videoElement && canvasElement) {
+                const ctx = canvasElement.getContext('2d')
+                if (ctx) {
+                  canvasElement.width = videoElement.videoWidth
+                  canvasElement.height = videoElement.videoHeight
+                  ctx.clearRect(0, 0, canvasElement.width, canvasElement.height)
+
+                  const points = result.getResultPoints()
+                  if (points && points.length > 0) {
+                    ctx.beginPath()
+                    ctx.lineWidth = 4
+                    ctx.strokeStyle = '#00ff00' // Green color for focus
+
+                    // Draw bounding box polygon
+                    ctx.moveTo(points[0].getX(), points[0].getY())
+                    for (let i = 1; i < points.length; i++) {
+                      ctx.lineTo(points[i].getX(), points[i].getY())
+                    }
+                    ctx.closePath()
+                    ctx.stroke()
+                  }
+                }
+              }
+
+              // Handle Scan Logic with Delay
               if (text && !scannedCodesRef.current.has(text)) {
                 console.log('QR Code detected:', text)
                 scannedCodesRef.current.add(text)
@@ -89,6 +119,20 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
                 const parsed = parseQRValueFull(text)
                 setParsedData(parsed)
                 onScan(text)
+
+                // Allow re-scanning the same code after 3 seconds
+                setTimeout(() => {
+                  if (scannedCodesRef.current) {
+                    scannedCodesRef.current.delete(text)
+                  }
+                }, 3000)
+              }
+            } else if (err && !(err instanceof NotFoundException)) {
+              // Clear canvas on error or no result (optional, but good for cleanup)
+              const canvasElement = canvasRef.current
+              if (canvasElement) {
+                const ctx = canvasElement.getContext('2d')
+                ctx?.clearRect(0, 0, canvasElement.width, canvasElement.height)
               }
             }
           }
@@ -235,6 +279,10 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
             className="h-[400px] w-full object-cover"
             muted
             playsInline
+          />
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 h-full w-full pointer-events-none"
           />
           {videoInputDevices.length > 1 && (
             <Button
