@@ -68,6 +68,40 @@ export function parseQRValueFull(qrValue: string): AllQRData {
     }
   }
 
+  // Try parsing multiline text (key: value format) (Custom format support)
+  if (rawValue.includes('\n') || rawValue.includes(':')) {
+    const lines = rawValue.split(/\r?\n/)
+    const multilineParams: Record<string, string> = {}
+    let foundKeyValue = false
+
+    lines.forEach(line => {
+      const parts = line.split(':')
+      if (parts.length >= 2) {
+        const key = parts[0].trim().replace(/[.]/g, '') // Remove dots from keys like "Batch No."
+        const value = parts.slice(1).join(':').trim() // Re-join rest in case value has colon
+        if (key && value) {
+          multilineParams[key] = value
+          parameters[key] = value // Add to main parameters
+          foundKeyValue = true
+        }
+      }
+    })
+
+    if (foundKeyValue) {
+      // keys usually appear as "Batch No", "Container No", "Serial Shipping Container Code"
+      const batchNo = findValue(['Batch No', 'Batch Number', 'Batch', 'Lot No', 'Lot'], multilineParams)
+      const containerNo = findValue(['Container No', 'Container', 'Serial Shipping Container Code', 'SSCC'], multilineParams)
+
+      return {
+        format: 'text',
+        rawValue,
+        parameters,
+        batchNo,
+        containerNo
+      }
+    }
+  }
+
   // If no delimiter found, treat as plain text
   parameters['value'] = rawValue
   return {
@@ -75,6 +109,20 @@ export function parseQRValueFull(qrValue: string): AllQRData {
     rawValue,
     parameters,
   }
+}
+
+// Helper to find value by multiple possible keys (case-insensitive)
+function findValue(keys: string[], params: Record<string, string>): string | undefined {
+  const normalizedParams = Object.keys(params).reduce((acc, key) => {
+    acc[key.toLowerCase()] = params[key]
+    return acc
+  }, {} as Record<string, string>)
+
+  for (const key of keys) {
+    const val = normalizedParams[key.toLowerCase()]
+    if (val) return val
+  }
+  return undefined
 }
 
 /**
@@ -107,6 +155,53 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
     // Not JSON, continue with other formats
   }
 
+  // Try parsing multiline text (key: value format)
+  if (qrValue.includes('\n') || qrValue.includes(':')) {
+    const lines = qrValue.split(/\r?\n/)
+    const multilineParams: Record<string, string> = {}
+    let foundKeyValue = false
+
+    lines.forEach(line => {
+      const parts = line.split(':')
+      if (parts.length >= 2) {
+        const key = parts[0].trim().replace(/[.]/g, '')
+        const value = parts.slice(1).join(':').trim()
+        if (key && value) {
+          multilineParams[key] = value
+          foundKeyValue = true
+        }
+      }
+    })
+
+    if (foundKeyValue) {
+      const normalize = (k: string) => k.toLowerCase()
+      const normalizedParams = Object.keys(multilineParams).reduce((acc, k) => {
+        acc[normalize(k)] = multilineParams[k]
+        return acc
+      }, {} as Record<string, string>)
+
+      const getVal = (keys: string[]) => {
+        for (const k of keys) {
+          const v = normalizedParams[normalize(k)]
+          if (v) return v
+        }
+        return undefined
+      }
+
+      const batchNo = getVal(['Batch No', 'Batch Number', 'Batch', 'Lot No', 'Lot'])
+      const containerNo = getVal(['Container No', 'Container', 'Serial Shipping Container Code', 'SSCC'])
+
+      if (batchNo && containerNo) {
+        return {
+          batchNo,
+          containerNo,
+          rawValue: qrValue,
+          ...multilineParams
+        }
+      }
+    }
+  }
+
   // Try splitting by common delimiters
   const delimiters = ['-', '|', ',', ':', ';']
   for (const delimiter of delimiters) {
@@ -130,8 +225,23 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
  * Extract S.NO from Container No (typically first 2 digits)
  */
 export function extractSNOFromContainer(containerNo: string): string {
+  // Handle "03 of 26" format
+  if (containerNo.toLowerCase().includes(' of ')) {
+    const parts = containerNo.toLowerCase().split(' of ')
+    return parts[0].replace(/\D/g, '')
+  }
+
+  // Handle raw digits or other formats
   const digits = containerNo.replace(/\D/g, '')
-  return digits.substring(0, 2)
+
+  // If it's a long SSCC (18 digits) or similar, returning first 2 digits is likely wrong for S.NO 
+  // unless specifically encoded. For now, return up to first 4 digits if short, or whole if strictly numeric?
+  // Let's stick to returning the digits found if it looks like a simple number, 
+  // or first few if it looks like a complex code?
+  // User's Excel likely has "1", "2", "3" or "01", "02".
+  // If we return "78905..." it won't match "01".
+  // But if the container no IS the SSCC in the excel, we want the whole thing.
+  return digits
 }
 
 /**

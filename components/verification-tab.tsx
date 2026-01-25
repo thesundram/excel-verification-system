@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 
 export function VerificationTab() {
-  const { uploadedData, markRowAsVerified, lastScannedQR, getRowByBatchAndSNO } = useVerification()
+  const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO } = useVerification()
   const [isScanning, setIsScanning] = useState(false)
   const [scannedCount, setScannedCount] = useState(0)
 
@@ -41,7 +41,19 @@ export function VerificationTab() {
 
       const batchNo = parsedQR.batchNo
       const containerNo = parsedQR.containerNo
-      const sno = extractSNOFromContainer(containerNo) // First 2 digits
+      const sno = extractSNOFromContainer(containerNo) // First 2 digits? Or extracted from "X of Y"
+
+      // Prepare data for display
+      const scannedData = {
+        'Batch No': batchNo,
+        'Container No': containerNo,
+        ...parsedQR.parameters,
+        timestamp: Date.now()
+      }
+      // Remove internal keys
+      // @ts-ignore
+      delete scannedData.value
+      setLastScannedQR(scannedData as any)
 
       const matchingRow = getRowByBatchAndSNO(batchNo, sno)
 
@@ -54,10 +66,18 @@ export function VerificationTab() {
         setScannedCount((prev) => prev + 1)
         toast.success(`Successfully matched! Row ${matchingRow['S.NO']} verified.`)
       } else {
-        toast.error(`No matching row found for Batch: ${batchNo}, S.NO: ${sno}`)
+        // Check if at least Batch No exists in the uploaded data
+        // @ts-ignore
+        const batchExists = uploadedData.some(row => row['Batch no']?.toString().replace(/\s/g, '').toLowerCase() === batchNo.replace(/\s/g, '').toLowerCase())
+
+        if (batchExists) {
+          toast.warning(`Batch found (${batchNo}) but S.NO (${sno}) does not match any unverified row.`)
+        } else {
+          toast.error(`No matching row found for Batch: ${batchNo}`)
+        }
       }
     },
-    [getRowByBatchAndSNO, markRowAsVerified]
+    [getRowByBatchAndSNO, markRowAsVerified, setLastScannedQR, uploadedData]
   )
 
   const verifiedRowIds = useMemo(
@@ -87,8 +107,6 @@ export function VerificationTab() {
           Scan QR codes to match against your Excel data. Matched rows will be highlighted green.
         </p>
       </div>
-
-
 
       <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
         <div>
@@ -163,15 +181,15 @@ export function VerificationTab() {
         <div className="rounded-lg border border-border bg-card p-4">
           <h4 className="mb-3 font-semibold text-foreground">Last Scanned Data</h4>
           <div className="space-y-2 font-mono text-sm">
-            <p>
-              <span className="text-muted-foreground">Batch No: </span>
-              <span className="font-semibold text-foreground">{lastScannedQR['Batch No']}</span>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Container No: </span>
-              <span className="font-semibold text-foreground">{lastScannedQR['Container No']}</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
+            {Object.entries(lastScannedQR)
+              .filter(([key]) => key !== 'timestamp' && key !== 'rawValue')
+              .map(([key, value]) => (
+                <div key={key} className="flex flex-col sm:flex-row sm:justify-between border-b border-border/50 pb-1 last:border-0">
+                  <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
+                  <span className="font-semibold text-foreground break-all text-right">{String(value)}</span>
+                </div>
+              ))}
+            <p className="text-xs text-muted-foreground pt-2">
               Scanned at: {new Date(lastScannedQR.timestamp).toLocaleTimeString()}
             </p>
           </div>
