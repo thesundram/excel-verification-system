@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { useVerification } from '@/lib/verification-context'
 import { parseExcelFile, validateExcelFile } from '@/lib/excel-parser'
 import { SetupGuide } from '@/components/setup-guide'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
@@ -22,18 +23,13 @@ import {
 export function UploadTab() {
   const { setUploadedData, uploadedData } = useVerification()
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File | null) => {
     if (!file) return
 
-    setError(null)
-    setSuccess(false)
-
     if (!validateExcelFile(file)) {
-      setError('Please upload a valid Excel file (.xlsx or .xls)')
+      toast.error('Please upload a valid Excel file (.xlsx or .xls)')
       return
     }
 
@@ -41,14 +37,13 @@ export function UploadTab() {
     try {
       const data = await parseExcelFile(file)
       if (data.length === 0) {
-        setError('Excel file is empty. Please upload a file with data.')
+        toast.error('Excel file is empty. Please upload a file with data.')
         return
       }
       setUploadedData(data)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 5000)
+      toast.success(`Successfully uploaded ${data.length} rows. You can now proceed to the Verification tab.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse Excel file')
+      toast.error(err instanceof Error ? err.message : 'Failed to parse Excel file')
     } finally {
       setIsLoading(false)
     }
@@ -88,7 +83,7 @@ export function UploadTab() {
       </div>
 
       <div
-        className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 transition-colors hover:border-primary hover:bg-secondary"
+        className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-6 sm:p-12 transition-colors hover:border-primary hover:bg-secondary"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
@@ -124,22 +119,6 @@ export function UploadTab() {
           </div>
           <Progress value={60} className="h-2" />
         </div>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border-success bg-success/10">
-          <CheckCircle className="h-4 w-4 text-success" />
-          <AlertDescription className="text-success-foreground">
-            Successfully uploaded {uploadedData.length} rows. You can now proceed to the Verification tab.
-          </AlertDescription>
-        </Alert>
       )}
 
       {uploadedData.length > 0 && (

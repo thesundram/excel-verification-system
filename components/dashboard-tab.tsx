@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { AlertCircle, Download, RotateCcw, CheckCircle, FileText } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function DashboardTab() {
   const { uploadedData, getVerificationStats, resetAllData } = useVerification()
@@ -36,11 +37,13 @@ export function DashboardTab() {
     document.body.appendChild(element)
     element.click()
     document.body.removeChild(element)
+    toast.success('Verification results downloaded successfully')
   }
 
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
       resetAllData()
+      toast.success('All data has been reset')
     }
   }
 
@@ -70,7 +73,7 @@ export function DashboardTab() {
       </div>
 
       {/* Metric Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         {/* Total Rows Card */}
         <Card className="flex flex-col justify-between p-6">
           <div className="mb-4 flex items-center justify-between">

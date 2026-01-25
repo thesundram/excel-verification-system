@@ -29,20 +29,20 @@ export function AppContainer() {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
-            <TabsTrigger value="upload" className="flex items-center gap-2">
-              <FileUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Upload</span>
+          <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
+            <TabsTrigger value="upload" className="flex items-center gap-2 text-xs sm:text-sm">
+              <FileUp className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Upload</span>
             </TabsTrigger>
-            <TabsTrigger value="verification" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Verify</span>
+            <TabsTrigger value="verification" className="flex items-center gap-2 text-xs sm:text-sm">
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Verify</span>
             </TabsTrigger>
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 text-xs sm:text-sm">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Dashboard</span>
             </TabsTrigger>
           </TabsList>
 

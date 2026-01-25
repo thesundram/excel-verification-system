@@ -6,6 +6,7 @@ import { QRScanner } from '@/components/qr-scanner'
 import { QRFormatGuide } from '@/components/qr-format-guide'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { parseQRValue, extractSNOFromContainer, validateParsedQR } from '@/lib/qr-parser'
 import {
   Table,
@@ -19,7 +20,6 @@ import {
 export function VerificationTab() {
   const { uploadedData, markRowAsVerified, lastScannedQR, getRowByBatchAndSNO } = useVerification()
   const [isScanning, setIsScanning] = useState(false)
-  const [scanFeedback, setScanFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [scannedCount, setScannedCount] = useState(0)
 
   const handleQRScan = useCallback(
@@ -28,22 +28,14 @@ export function VerificationTab() {
       const parsedQR = parseQRValue(qrValue)
 
       if (!parsedQR) {
-        setScanFeedback({
-          type: 'error',
-          message: 'Invalid QR format. Expected format: BATCH-CONTAINER or JSON with batch/container fields.',
-        })
-        setTimeout(() => setScanFeedback(null), 4000)
+        toast.error('Invalid QR format. Expected format: BATCH-CONTAINER or JSON with batch/container fields.')
         return
       }
 
       // Validate parsed QR data
       const validation = validateParsedQR(parsedQR)
       if (!validation.valid) {
-        setScanFeedback({
-          type: 'error',
-          message: validation.error || 'Invalid QR data',
-        })
-        setTimeout(() => setScanFeedback(null), 4000)
+        toast.error(validation.error || 'Invalid QR data')
         return
       }
 
@@ -60,17 +52,9 @@ export function VerificationTab() {
           timestamp: Date.now(),
         })
         setScannedCount((prev) => prev + 1)
-        setScanFeedback({
-          type: 'success',
-          message: `Successfully matched! Row ${matchingRow['S.NO']} verified.`,
-        })
-        setTimeout(() => setScanFeedback(null), 4000)
+        toast.success(`Successfully matched! Row ${matchingRow['S.NO']} verified.`)
       } else {
-        setScanFeedback({
-          type: 'error',
-          message: `No matching row found for Batch: ${batchNo}, S.NO: ${sno}`,
-        })
-        setTimeout(() => setScanFeedback(null), 4000)
+        toast.error(`No matching row found for Batch: ${batchNo}, S.NO: ${sno}`)
       }
     },
     [getRowByBatchAndSNO, markRowAsVerified]
@@ -104,16 +88,7 @@ export function VerificationTab() {
         </p>
       </div>
 
-      {scanFeedback && (
-        <Alert variant={scanFeedback.type === 'success' ? 'default' : 'destructive'}>
-          {scanFeedback.type === 'success' ? (
-            <CheckCircle className="h-4 w-4" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
-          <AlertDescription>{scanFeedback.message}</AlertDescription>
-        </Alert>
-      )}
+
 
       <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
         <div>
@@ -130,7 +105,7 @@ export function VerificationTab() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Left Panel: Excel Data Table */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Uploaded Data</h3>
@@ -153,11 +128,10 @@ export function VerificationTab() {
                 {uploadedData.map((row, idx) => (
                   <TableRow
                     key={row.id}
-                    className={`transition-colors ${
-                      row.verified
-                        ? 'bg-success/20 hover:bg-success/30'
-                        : 'hover:bg-muted/50'
-                    }`}
+                    className={`transition-colors ${row.verified
+                      ? 'bg-success/20 hover:bg-success/30'
+                      : 'hover:bg-muted/50'
+                      }`}
                   >
                     <TableCell className="font-medium text-muted-foreground">{idx + 1}</TableCell>
                     {Object.keys(row)
