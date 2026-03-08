@@ -217,6 +217,34 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
     }
   }
 
+  // Try to use regex to find keys like "Batch No", "S No" and "Serial Shipping Container Code" directly in the raw string, 
+  // as some QR codes are just one long string without newlines
+  const extractWithRegex = (keyRegex: RegExp, text: string): string | null => {
+    const match = text.match(keyRegex)
+    if (match && match[1]) {
+      return match[1].trim()
+    }
+    return null
+  }
+
+  // Regex patterns to match "Key : Value" or "Key: Value" up to the next known key or end of string
+  const batchRegex = /(?:Batch No|Batch Number)\s*:\s*([A-Za-z0-9]+)/i
+  const containerRegex = /(?:Serial Shipping Container Code|SSCC|Container No)\s*:\s*(\d+)/i
+  const sNoRegex = /(?:S No|S\.NO|SNO|S No\.)\s*:\s*(\d+)/i
+
+  const batchMatch = extractWithRegex(batchRegex, qrValue)
+  const containerMatch = extractWithRegex(containerRegex, qrValue)
+  const sNoMatch = extractWithRegex(sNoRegex, qrValue)
+
+  if (batchMatch && containerMatch) {
+    return {
+      batchNo: batchMatch,
+      containerNo: containerMatch,
+      'S.NO': sNoMatch || extractSNOFromContainer(containerMatch),
+      rawValue: qrValue,
+    }
+  }
+
   // Try splitting by common delimiters
   const delimiters = ['-', '|', ',', ':', ';']
   for (const delimiter of delimiters) {
