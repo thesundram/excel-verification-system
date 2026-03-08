@@ -88,6 +88,13 @@ export function Upload() {
     );
   });
 
+  const filteredSummaryRows = summaryRows.filter(row => {
+    if (!searchTerm) return true;
+    return Object.values(row).some(val => 
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   const columns = uploadedData.length > 0 ? Object.keys(uploadedData[0]).filter((k) => k !== 'id' && k !== 'verified') : []
 
   return (
@@ -175,78 +182,92 @@ export function Upload() {
       )}
 
       {uploadedData.length > 0 && (
-        <div className="space-y-4 transition-all duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Data Preview</h3>
-              <span className="text-sm text-muted-foreground">
-                Showing {filteredData.length} of {uploadedData.length} rows
-              </span>
+        <div className="space-y-4 lg:col-span-2 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 p-4 sm:p-5 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent rounded-2xl border border-primary/20 backdrop-blur-sm relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-opacity group-hover:opacity-100 opacity-50" />
+             
+             <div className="relative z-10 space-y-1">
+              <h3 className="text-base sm:text-xl font-black text-foreground flex items-center gap-2">
+                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Data Preview</span>
+              </h3>
+              <p className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase tracking-widest block opacity-80">
+                <span className="text-primary">{uploadedData.length}</span> rows initialized
+              </p>
             </div>
-            <div className="relative w-full sm:max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            
+            <div className="relative w-full sm:max-w-xs z-10 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary opacity-50" />
               <Input
                 type="text"
-                placeholder="Search within all data..."
-                className="pl-9 bg-background focus:ring-primary focus:border-primary"
+                placeholder="Search dataset..."
+                className="pl-8 sm:pl-9 h-9 sm:h-10 bg-background/60 backdrop-blur-md focus:ring-primary focus:border-primary border-primary/20 rounded-xl shadow-inner font-medium text-xs sm:text-sm w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="relative w-full overflow-auto max-h-[60vh] rounded-lg border border-border bg-card shadow-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-            <Table className="relative w-full whitespace-nowrap">
-              <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 shadow-sm border-b">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold w-16 sticky left-0 bg-muted/95 z-20">Row</TableHead>
-                  {columns.map((col) => (
-                    <TableHead key={col} className="font-semibold text-xs uppercase tracking-wider">
-                      {col}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((row, idx) => (
-                    <TableRow key={row.id} className="hover:bg-muted/50 transition-colors">
-                      <TableCell className="font-medium text-muted-foreground sticky left-0 bg-card shadow-[1px_0_0_0_rgba(0,0,0,0.05)] text-xs">
-                        {idx + 1}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-primary/20 bg-card/40 backdrop-blur-xl shadow-lg ring-1 ring-white/10 group">
+             <div className="absolute -inset-1 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-2xl blur-lg pointer-events-none transition-opacity opacity-0 group-hover:opacity-100 duration-500" />
+             
+            <div className="relative overflow-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-primary/60 hover:scrollbar-thumb-primary scrollbar-track-primary/5">
+              <Table className="relative w-full whitespace-nowrap">
+                <TableHeader className="sticky top-0 z-20">
+                  <TableRow className="hover:bg-transparent border-b border-primary/20">
+                    <TableHead className="font-black w-16 sticky left-0 bg-secondary/80 backdrop-blur-md z-30 text-primary uppercase tracking-widest text-[10px]">#</TableHead>
+                    {columns.map((col) => (
+                      <TableHead key={col} className="font-bold text-xs uppercase tracking-wider text-muted-foreground bg-secondary/80 backdrop-blur-md">
+                        {col}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredData.length > 0 ? (
+                    filteredData.map((row, idx) => (
+                      <TableRow key={row.id} className="hover:bg-primary/5 transition-colors border-b border-white/5 group/row">
+                        <TableCell className="font-bold text-muted-foreground sticky left-0 bg-card/90 backdrop-blur-md shadow-[1px_0_0_0_rgba(255,255,255,0.05)] text-xs group-hover/row:text-primary transition-colors">
+                          {idx + 1}
+                        </TableCell>
+                        {columns.map((col) => (
+                          <TableCell key={`${row.id}-${col}`} className="text-sm font-medium group-hover/row:text-foreground/90 transition-colors">
+                            {String((row as any)[col] || '-')}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 1} className="h-32 sm:h-40 text-center text-muted-foreground relative overflow-hidden">
+                        <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3 z-10 relative px-4">
+                           <Search className="h-6 w-6 sm:h-8 sm:w-8 opacity-20" />
+                           <div>
+                             <p className="font-black text-sm sm:text-lg">No matches found</p>
+                             <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-50 mt-0.5 sm:mt-1">Adjust search parameters</p>
+                           </div>
+                        </div>
                       </TableCell>
-                      {columns.map((col) => (
-                        <TableCell key={`${row.id}-${col}`} className="text-sm">
-                          {String((row as any)[col] || '-')}
-                        </TableCell>
-                      ))}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length + 1} className="h-32 text-center text-muted-foreground">
-                      <p className="font-medium">No results found</p>
-                      <p className="text-xs opacity-70 mt-1">Try adjusting your search query.</p>
-                    </TableCell>
-                  </TableRow>
-                )}
-                {summaryRows.map((row) => (
-                  <TableRow key={row.id} className="bg-primary/5 hover:bg-primary/10 transition-colors border-t-2 border-primary/20">
-                    <TableCell className="font-medium text-primary sticky left-0 bg-primary/5 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] text-xs">
-                      {row.isTotal ? 'Total' : '*'}
-                    </TableCell>
-                    {columns.map((col) => {
-                      const val = String((row as any)[col] || '-')
-                      const isBold = val.toLowerCase() === 'total' || val.toLowerCase().includes('(kg)')
-                      return (
-                        <TableCell key={`${row.id}-${col}`} className={`text-sm ${isBold ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
-                          {val}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  )}
+                  {filteredSummaryRows.map((row) => (
+                    <TableRow key={row.id} className="bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/20 transition-colors border-t border-primary/30 relative">
+                      <TableCell className="font-black text-primary sticky left-0 bg-card/60 backdrop-blur-md shadow-[1px_0_0_0_rgba(var(--primary),0.2)] text-[10px] uppercase tracking-widest">
+                        {row.isTotal ? 'Net' : 'Sum'}
+                      </TableCell>
+                      {columns.map((col) => {
+                        const val = String((row as any)[col] || '-')
+                        const isBold = val.toLowerCase() === 'total' || val.toLowerCase().includes('(kg)')
+                        return (
+                          <TableCell key={`${row.id}-${col}`} className={`text-sm ${isBold ? 'font-black text-primary drop-shadow-sm' : 'font-bold text-foreground/80'}`}>
+                            {val}
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       )}

@@ -87,7 +87,8 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
   const getRowByBatchAndSNO = useCallback(
     (batchNo: string, sno: string) => {
       const normalizedBatchNo = batchNo.toString().trim().toLowerCase()
-      const normalizedSno = sno.toString().trim().toLowerCase()
+      // Remove leading zeroes for numeric matching on S.NO
+      const normalizedSno = sno.toString().trim().toLowerCase().replace(/^0+/, '') || '0'
 
       return uploadedData.find((row) => {
         // Find the actual keys in the row that correspond to Batch No and S.NO
@@ -105,7 +106,9 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
         )
 
         const rowBatch = batchKey ? row[batchKey]?.toString().trim().toLowerCase() : ''
-        const rowSno = snoKey ? row[snoKey]?.toString().trim().toLowerCase() : ''
+        const rawRowSno = snoKey ? row[snoKey]?.toString().trim().toLowerCase() : ''
+        // Remove leading zeroes from the excel row data as well for fair comparison
+        const rowSno = rawRowSno ? rawRowSno.replace(/^0+/, '') || '0' : ''
 
         return rowBatch === normalizedBatchNo && rowSno === normalizedSno
       })

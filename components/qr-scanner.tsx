@@ -123,10 +123,11 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
             setIsScanning(true)
           }}
           size="lg"
-          className="w-full"
+          className="w-full relative overflow-hidden bg-gradient-to-br from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all font-bold tracking-wide rounded-xl group"
         >
-          <Camera className="mr-2 h-4 w-4" />
-          Start Scanner
+          <div className="absolute inset-0 bg-white/20 px-2 translate-x-[-100%] skew-x-12 group-hover:translate-x-[200%] transition-transform duration-1000 ease-in-out" />
+          <Camera className="mr-2 h-5 w-5" />
+          <span className="uppercase tracking-widest text-xs">Start Camera Scanner</span>
         </Button>
       ) : (
         <Button
@@ -136,10 +137,10 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
           }}
           variant="outline"
           size="lg"
-          className="w-full"
+          className="w-full bg-destructive/10 border-destructive/30 hover:bg-destructive/20 text-destructive hover:text-destructive font-bold transition-all rounded-xl"
         >
-          <X className="mr-2 h-4 w-4" />
-          Stop Scanner
+          <X className="mr-2 h-5 w-5" />
+          <span className="uppercase tracking-widest text-xs">Stop Processing</span>
         </Button>
       )}
 
@@ -201,7 +202,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
             autoComplete="off"
             required
           />
-          <Button type="submit" className="w-full sm:w-auto py-2.5 h-auto shadow-md hover:shadow-lg transition-all font-bold whitespace-nowrap">
+          <Button type="submit" className="w-full sm:w-auto py-2.5 h-auto bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-lg shadow-primary/20 hover:shadow-xl transition-all font-bold whitespace-nowrap rounded-lg">
             Verify Now
           </Button>
         </form>
@@ -215,16 +216,17 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
                 <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-foreground">QR Code Detected</h4>
-                  <Badge variant="outline" className="mt-2">
+                  <Badge variant="outline" className="mt-2 bg-background/50 backdrop-blur-sm border-success/30">
                     Format: <span className="ml-1 capitalize">{parsedData.format}</span>
                   </Badge>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleResetScanner} variant="outline" size="sm" title="Scan next QR code">
-                  <Camera className="h-4 w-4" />
+                <Button onClick={handleResetScanner} variant="outline" size="sm" className="bg-background/80 hover:bg-success hover:text-white border-success/30 transition-all font-bold" title="Scan next QR code">
+                  <Camera className="mr-2 h-4 w-4" />
+                  Next Scan
                 </Button>
-                <Button onClick={handleClearScan} variant="ghost" size="sm" title="Clear data">
+                <Button onClick={handleClearScan} variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive transition-colors" title="Clear data">
                   <X className="h-4 w-4" />
                 </Button>
               </div>

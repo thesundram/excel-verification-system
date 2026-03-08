@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Download, RotateCcw, CheckCircle, FileText, Activity, AlertTriangle, Clock, XCircle, ChevronRight, Copy, Eye } from 'lucide-react'
+import { AlertCircle, Download, RotateCcw, CheckCircle, FileText, Activity, AlertTriangle, Clock, XCircle, ChevronRight, Copy, Eye, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
 export function Dashboard() {
   const { uploadedData, getVerificationStats, resetAllData, recentHistory } = useVerification()
   const [selectedEntry, setSelectedEntry] = useState<any>(null)
+  const [activitySearch, setActivitySearch] = useState('')
   const stats = getVerificationStats()
 
   const handleExport = () => {
@@ -163,30 +164,33 @@ export function Dashboard() {
       {/* Metric Cards Grid */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {/* Total Rows Card */}
-        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-blue-500/30 hover:-translate-y-1 group">
-          <div className="rounded-xl sm:rounded-2xl bg-blue-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-blue-500/20 transition-colors">
-            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
+        <Card className="relative overflow-hidden flex flex-col items-center justify-center text-center p-6 sm:p-8 shadow-sm border border-primary/20 bg-card/60 backdrop-blur-md transition-all duration-500 hover:shadow-xl hover:border-blue-500/50 hover:-translate-y-1 group">
+           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative z-10 rounded-2xl bg-blue-500/10 p-4 mb-4 group-hover:bg-blue-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-1 ring-blue-500/20 group-hover:ring-blue-500">
+            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 group-hover:text-white transition-colors" />
           </div>
-          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.total}</p>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Items</p>
+          <p className="relative z-10 text-4xl sm:text-5xl font-black text-foreground mb-1 tracking-tighter drop-shadow-sm">{stats.total}</p>
+          <p className="relative z-10 text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-[0.2em] group-hover:text-blue-500 transition-colors">Total Items</p>
         </Card>
 
         {/* Verified Rows Card */}
-        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-emerald-500/30 hover:-translate-y-1 group">
-          <div className="rounded-xl sm:rounded-2xl bg-emerald-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-emerald-500/20 transition-colors">
-            <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500" />
+        <Card className="relative overflow-hidden flex flex-col items-center justify-center text-center p-6 sm:p-8 shadow-sm border border-primary/20 bg-card/60 backdrop-blur-md transition-all duration-500 hover:shadow-xl hover:border-emerald-500/50 hover:-translate-y-1 group">
+           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative z-10 rounded-2xl bg-emerald-500/10 p-4 mb-4 group-hover:bg-emerald-500 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300 ring-1 ring-emerald-500/20 group-hover:ring-emerald-500">
+            <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-500 group-hover:text-white transition-colors" />
           </div>
-          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.verified}</p>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Verified</p>
+          <p className="relative z-10 text-4xl sm:text-5xl font-black text-foreground mb-1 tracking-tighter drop-shadow-sm">{stats.verified}</p>
+          <p className="relative z-10 text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-[0.2em] group-hover:text-emerald-500 transition-colors">Verified</p>
         </Card>
 
         {/* Unverified Rows Card */}
-        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-amber-500/30 hover:-translate-y-1 group sm:col-span-2 lg:col-span-1">
-          <div className="rounded-xl sm:rounded-2xl bg-amber-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-amber-500/20 transition-colors">
-            <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
+        <Card className="relative overflow-hidden flex flex-col items-center justify-center text-center p-6 sm:p-8 shadow-sm border border-primary/20 bg-card/60 backdrop-blur-md transition-all duration-500 hover:shadow-xl hover:border-amber-500/50 hover:-translate-y-1 group sm:col-span-2 lg:col-span-1">
+           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative z-10 rounded-2xl bg-amber-500/10 p-4 mb-4 group-hover:bg-amber-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-1 ring-amber-500/20 group-hover:ring-amber-500">
+            <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 group-hover:text-white transition-colors" />
           </div>
-          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.unverified}</p>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pending</p>
+          <p className="relative z-10 text-4xl sm:text-5xl font-black text-foreground mb-1 tracking-tighter drop-shadow-sm">{stats.unverified}</p>
+          <p className="relative z-10 text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-[0.2em] group-hover:text-amber-500 transition-colors">Pending</p>
         </Card>
       </div>
 
@@ -203,12 +207,27 @@ export function Dashboard() {
 
       {/* Recent Activity List */}
       <div className="space-y-4 pt-4">
-        <h3 className="text-xl sm:text-2xl font-black text-foreground flex items-center gap-2">
-          <span>Recent Activity</span>
-          <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] sm:text-xs font-black text-primary">
-            {recentHistory.length}
-          </span>
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h3 className="text-xl sm:text-2xl font-black text-foreground flex items-center gap-2">
+            <span>Recent Activity</span>
+            <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] sm:text-xs font-black text-primary">
+              {recentHistory.length}
+            </span>
+          </h3>
+          {/* Activity Search */}
+          {recentHistory.length > 0 && (
+            <div className="relative w-full sm:max-w-xs shrink-0 transition-all duration-300 animate-in fade-in slide-in-from-right-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary opacity-50" />
+              <input
+                type="text"
+                placeholder="Search history..."
+                value={activitySearch}
+                onChange={(e) => setActivitySearch(e.target.value)}
+                className="pl-8 sm:pl-9 h-9 sm:h-10 w-full rounded-xl border border-primary/20 bg-background/60 backdrop-blur-md px-3 py-1 text-xs sm:text-sm font-medium shadow-inner transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/70"
+              />
+            </div>
+          )}
+        </div>
 
         {recentHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-card/40 backdrop-blur-sm rounded-2xl border-2 border-dashed border-border/60 w-full transition-colors hover:bg-card/60 hover:border-border">
@@ -221,63 +240,86 @@ export function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2 w-full">
-            {recentHistory.map((entry: any, index: number) => (
-              <Card
-                key={index}
-                onClick={() => setSelectedEntry(entry)}
-                className="flex flex-row gap-0 w-full items-center justify-between py-2 px-3 shadow-sm border-border/40 bg-card/60 backdrop-blur-sm transition-all hover:shadow-md hover:border-primary/40 hover:bg-card group cursor-pointer active:scale-[0.99] overflow-hidden relative"
-              >
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${entry.status === 'success' ? 'bg-emerald-500' :
-                  entry.status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
-                  }`} />
-
-                {/* Left Status Icon */}
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ml-1.5 transition-transform group-hover:scale-110 ${entry.status === 'success' ? 'bg-emerald-500/15' :
-                  entry.status === 'warning' ? 'bg-amber-500/15' : 'bg-red-500/15'
-                  }`}>
-                  {entry.status === 'success' ? <CheckCircle className="h-5 w-5 text-emerald-500" /> :
-                    entry.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-amber-500" /> :
-                      <XCircle className="h-5 w-5 text-red-500" />}
-                </div>
-
-                {/* Center Content Text */}
-                <div className="flex-1 min-w-0 px-2 flex items-center justify-center gap-4 text-center">
-                  <div className="flex items-center gap-1.5 opacity-80 shrink-0">
-                    <span className="uppercase font-bold tracking-widest text-[9px] text-muted-foreground mt-0.5">Batch No:</span>
-                    <p className={`text-sm font-bold truncate max-w-[120px] sm:max-w-[180px] ${entry.batchNo === 'Unknown' ? 'text-destructive/80 italic' : 'text-foreground'}`}>
-                      {entry.batchNo === 'Unknown' ? 'Unknown' : entry.batchNo}
-                    </p>
-                  </div>
-
-                  <div className="hidden sm:flex items-center gap-1.5 border-l border-border/60 pl-4 opacity-80 shrink-0">
-                    <span className="uppercase font-bold tracking-widest text-[9px] text-muted-foreground mt-0.5">S.No:</span>
-                    <span className={`text-xs font-semibold truncate max-w-[80px] sm:max-w-[150px] ${entry.sno === 'Unknown' ? 'text-destructive/80 italic' : 'text-foreground'}`}>
-                      {entry.sno === 'Unknown' ? 'Unidentified' : entry.sno}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Area: Verification Type, Time & View Icon */}
-                <div className="flex items-center gap-3 shrink-0 pr-1">
-                  <div className="hidden sm:flex items-center gap-2 border-l border-border/60 pl-4 opacity-100 shrink-0">
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${entry.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400' :
-                      entry.status === 'warning' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400' :
-                        'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400'
-                      }`}>
-                      {entry.type === 'manual' ? 'Manual Verify' : 'QR Verify'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-foreground dark:text-foreground whitespace-nowrap">
-                    {getRelativeTime(entry.timestamp)}
-                  </span>
-                  <div className="w-8 flex flex-col items-center justify-center shrink-0 border-l border-border/60 pl-3">
-                    <Eye className="h-4 w-4 text-muted-foreground opacity-40 group-hover:opacity-100 group-hover:text-primary transition-all" />
-                    <span className="text-[9px] font-bold text-muted-foreground mt-0.5 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all uppercase tracking-widest hidden sm:block">View</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
+          <div className="relative rounded-2xl border border-primary/20 bg-card/40 backdrop-blur-xl shadow-lg ring-1 ring-white/10 p-2 sm:p-3">
+             <div className="overflow-auto max-h-[400px] sm:max-h-[500px] scrollbar-thin scrollbar-thumb-primary/60 hover:scrollbar-thumb-primary scrollbar-track-primary/5 pr-1 sm:pr-2">
+               <div className="grid grid-cols-1 gap-3 w-full pb-1">
+                 {recentHistory.filter((entry: any) => {
+                    const searchLower = activitySearch.toLowerCase();
+                    return entry.batchNo.toLowerCase().includes(searchLower) || 
+                           entry.sno.toLowerCase().includes(searchLower) || 
+                           (entry.type === 'manual' ? 'manual' : 'qr scan').includes(searchLower);
+                 }).length > 0 ? (
+                     recentHistory.filter((entry: any) => {
+                        const searchLower = activitySearch.toLowerCase();
+                        return entry.batchNo.toLowerCase().includes(searchLower) || 
+                               entry.sno.toLowerCase().includes(searchLower) || 
+                               (entry.type === 'manual' ? 'manual' : 'qr scan').includes(searchLower);
+                     }).map((entry: any, index: number) => (
+                      <Card
+                        key={index}
+                        onClick={() => setSelectedEntry(entry)}
+                        className="flex flex-col sm:flex-row gap-3 w-full items-start sm:items-center justify-between p-3 sm:px-4 sm:py-3 shadow-md border-primary/10 bg-card/60 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:bg-card/90 group cursor-pointer active:scale-[0.99] overflow-hidden relative"
+                      >
+                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-colors group-hover:w-2 ${entry.status === 'success' ? 'bg-emerald-500' :
+                          entry.status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
+                          }`} />
+        
+                        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                            {/* Left Status Icon */}
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ml-1.5 sm:ml-2 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-sm ${entry.status === 'success' ? 'bg-emerald-500/15' :
+                            entry.status === 'warning' ? 'bg-amber-500/15' : 'bg-red-500/15'
+                            }`}>
+                            {entry.status === 'success' ? <CheckCircle className="h-5 w-5 text-emerald-500" /> :
+                                entry.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-amber-500" /> :
+                                <XCircle className="h-5 w-5 text-red-500" />}
+                            </div>
+        
+                            {/* Center Content Text */}
+                            <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">
+                            <div className="flex flex-col">
+                                <span className="uppercase font-black tracking-widest text-[9px] text-muted-foreground group-hover:text-primary transition-colors">Batch No</span>
+                                <p className={`text-sm sm:text-base font-black truncate max-w-[200px] sm:max-w-[180px] ${entry.batchNo === 'Unknown' ? 'text-destructive/80 italic' : 'text-foreground'}`}>
+                                {entry.batchNo === 'Unknown' ? 'Unknown' : entry.batchNo}
+                                </p>
+                            </div>
+        
+                            <div className="flex flex-col sm:border-l sm:border-border/60 sm:pl-6">
+                                <span className="uppercase font-black tracking-widest text-[9px] text-muted-foreground group-hover:text-primary transition-colors">S.No</span>
+                                <span className={`text-xs sm:text-sm font-bold truncate max-w-[200px] sm:max-w-[150px] ${entry.sno === 'Unknown' ? 'text-destructive/80 italic' : 'text-foreground'}`}>
+                                {entry.sno === 'Unknown' ? 'Unidentified' : entry.sno}
+                                </span>
+                            </div>
+                            </div>
+                        </div>
+        
+                        {/* Right Area: Verification Type, Time & View Icon */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-border/40 sm:border-t-0 shrink-0">
+                          <div className="flex items-center gap-2 sm:border-l sm:border-border/60 sm:pl-4">
+                            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md border shadow-sm transition-colors ${entry.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 group-hover:bg-emerald-500/20' :
+                              entry.status === 'warning' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 group-hover:bg-amber-500/20' :
+                                'bg-red-500/10 text-red-600 border-red-500/20 group-hover:bg-red-500/20'
+                              }`}>
+                              {entry.type === 'manual' ? 'Manual' : 'QR Scan'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-bold text-muted-foreground whitespace-nowrap">
+                            {getRelativeTime(entry.timestamp)}
+                          </span>
+                          <div className="w-8 flex flex-col items-center justify-center shrink-0 sm:border-l sm:border-border/60 sm:pl-4">
+                            <Eye className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-primary transition-all duration-300" />
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                 ) : (
+                     <div className="text-center py-10 text-muted-foreground">
+                        <Activity className="h-8 w-8 mx-auto opacity-20 mb-3" />
+                        <p className="font-bold">No matching activity found</p>
+                        <p className="text-xs uppercase tracking-widest opacity-50 mt-1">Try another search term</p>
+                     </div>
+                 )}
+               </div>
+             </div>
           </div>
         )}
       </div>
