@@ -5,7 +5,8 @@ import { useVerification } from '@/lib/verification-context'
 import { QRScanner } from '@/components/qr-scanner'
 import { QRFormatGuide } from '@/components/qr-format-guide'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle, AlertCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { CheckCircle, AlertCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { parseQRValue, extractSNOFromContainer, validateParsedQR } from '@/lib/qr-parser'
 import {
@@ -18,9 +19,47 @@ import {
 } from '@/components/ui/table'
 
 export function VerificationTab() {
-  const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO } = useVerification()
+  const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO, addToHistory } = useVerification()
   const [isScanning, setIsScanning] = useState(false)
   const [scannedCount, setScannedCount] = useState(0)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const isSummaryRow = (row: Record<string, any>) => {
+    return Object.values(row).some(val => {
+      const str = String(val).toLowerCase().trim()
+      return str === 'total' || str.includes('(kg)')
+    })
+  }
+
+  const mainData = useMemo(() => uploadedData.filter(row => !isSummaryRow(row)), [uploadedData])
+  const summaryRows = useMemo(() => uploadedData.filter(row => isSummaryRow(row)).map(r => ({
+    ...r,
+    isTotal: Object.values(r).some(v => String(v).toLowerCase().trim() === 'total')
+  })), [uploadedData])
+
+  const filteredData = useMemo(() => mainData.filter(row => {
+    if (!searchTerm) return true;
+    return Object.values(row).some(val => 
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }), [mainData, searchTerm])
+
+  const columns = uploadedData.length > 0 ? Object.keys(uploadedData[0]).filter((k) => k !== 'id' && k !== 'verified') : []
+
+
+  const playSuccessSound = () => {
+    try {
+      const audio = new Audio('/success.mp3') // Assume exist or fallback to generic beep
+      audio.play().catch(() => {})
+    } catch (e) {}
+  }
+
+  const playErrorSound = () => {
+    try {
+      const audio = new Audio('/error.mp3')
+      audio.play().catch(() => {})
+    } catch (e) {}
+  }
 
   const handleQRScan = useCallback(
     (qrValue: string) => {
@@ -28,28 +67,39 @@ export function VerificationTab() {
       const parsedQR = parseQRValue(qrValue)
 
       if (!parsedQR) {
+        playErrorSound()
         toast.error('Invalid QR format. Expected format: BATCH-CONTAINER or JSON with batch/container fields.')
+        addToHistory({ batchNo: 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { rawValue: qrValue } })
         return
       }
 
       // Validate parsed QR data
       const validation = validateParsedQR(parsedQR)
       if (!validation.valid) {
+        playErrorSound()
         toast.error(validation.error || 'Invalid QR data')
+        addToHistory({ batchNo: parsedQR.batchNo || 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue } })
         return
       }
 
       const batchNo = parsedQR.batchNo
       const containerNo = parsedQR.containerNo
-      const sno = extractSNOFromContainer(containerNo) // First 2 digits? Or extracted from "X of Y"
+      
+      // Better extraction logic to match VeriScan Pro
+      let sno = String(parsedQR['S No'] || parsedQR['S.NO'] || parsedQR['sno'] || '')
+      if (!sno) {
+        sno = extractSNOFromContainer(containerNo)
+      }
 
       // Prepare data for display
       const scannedData = {
         'Batch No': batchNo,
+        'S.NO': sno,
         'Container No': containerNo,
         ...parsedQR.parameters,
         timestamp: Date.now()
       }
+      
       // Remove internal keys
       // @ts-ignore
       delete scannedData.value
@@ -58,26 +108,39 @@ export function VerificationTab() {
       const matchingRow = getRowByBatchAndSNO(batchNo, sno)
 
       if (matchingRow) {
-        markRowAsVerified(matchingRow.id, {
-          'Batch No': batchNo,
-          'Container No': containerNo,
-          timestamp: Date.now(),
-        })
-        setScannedCount((prev) => prev + 1)
-        toast.success(`Successfully matched! Row ${matchingRow['S.NO']} verified.`)
+        if (matchingRow.verified) {
+            playErrorSound()
+            toast.warning(`Already Verified: Row ${matchingRow['S.NO']} was already scanned.`)
+            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue } })
+        } else {
+            markRowAsVerified(matchingRow.id, {
+            'Batch No': batchNo,
+            'S.NO': sno,
+            'Container No': containerNo,
+            ...parsedQR,
+            timestamp: Date.now(),
+            })
+            setScannedCount((prev) => prev + 1)
+            playSuccessSound()
+            toast.success(`Successfully matched! Row ${matchingRow['S.NO']} verified.`)
+            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'success', scanData: { ...parsedQR, rawValue: qrValue } })
+        }
       } else {
         // Check if at least Batch No exists in the uploaded data
         // @ts-ignore
         const batchExists = uploadedData.some(row => row['Batch no']?.toString().replace(/\s/g, '').toLowerCase() === batchNo.replace(/\s/g, '').toLowerCase())
 
+        playErrorSound()
         if (batchExists) {
-          toast.warning(`Batch found (${batchNo}) but S.NO (${sno}) does not match any unverified row.`)
+          toast.warning(`Partial Match: Batch found (${batchNo}) but S.NO (${sno}) does not match any unverified row.`)
+          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue } })
         } else {
-          toast.error(`No matching row found for Batch: ${batchNo}`)
+          toast.error(`Not Found: No matching row found for Batch: ${batchNo}`)
+          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue } })
         }
       }
     },
-    [getRowByBatchAndSNO, markRowAsVerified, setLastScannedQR, uploadedData]
+    [getRowByBatchAndSNO, markRowAsVerified, setLastScannedQR, uploadedData, addToHistory]
   )
 
   const verifiedRowIds = useMemo(
@@ -126,47 +189,83 @@ export function VerificationTab() {
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Left Panel: Excel Data Table */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">Uploaded Data</h3>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <Table>
-              <TableHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Uploaded Data</h3>
+              <p className="text-sm text-muted-foreground">
+                {verifiedRowIds.size} of {uploadedData.length} rows verified
+              </p>
+            </div>
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search data..."
+                className="pl-9 bg-background focus:ring-primary focus:border-primary"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="relative w-full overflow-auto max-h-[60vh] rounded-lg border border-border bg-card shadow-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <Table className="relative w-full whitespace-nowrap">
+              <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 shadow-sm border-b">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold">Row</TableHead>
-                  {uploadedData.length > 0 &&
-                    Object.keys(uploadedData[0])
-                      .filter((k) => k !== 'id' && k !== 'verified')
-                      .map((col) => (
-                        <TableHead key={col} className="font-semibold">
-                          {col}
-                        </TableHead>
-                      ))}
+                  <TableHead className="font-semibold w-16 sticky left-0 bg-muted/95 z-20">Row</TableHead>
+                  {columns.map((col) => (
+                    <TableHead key={col} className="font-semibold text-xs uppercase tracking-wider">
+                      {col}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {uploadedData.map((row, idx) => (
-                  <TableRow
-                    key={row.id}
-                    className={`transition-colors ${row.verified
-                      ? 'bg-success/20 hover:bg-success/30'
-                      : 'hover:bg-muted/50'
-                      }`}
-                  >
-                    <TableCell className="font-medium text-muted-foreground">{idx + 1}</TableCell>
-                    {Object.keys(row)
-                      .filter((k) => k !== 'id' && k !== 'verified')
-                      .map((col) => (
+                {filteredData.length > 0 ? (
+                  filteredData.map((row, idx) => (
+                    <TableRow
+                      key={row.id}
+                      className={`transition-colors ${row.verified
+                        ? 'bg-success/20 hover:bg-success/30'
+                        : 'hover:bg-muted/50'
+                        }`}
+                    >
+                      <TableCell className="font-medium text-muted-foreground sticky left-0 bg-card shadow-[1px_0_0_0_rgba(0,0,0,0.05)] text-xs">
+                        {idx + 1}
+                      </TableCell>
+                      {columns.map((col) => (
                         <TableCell key={`${row.id}-${col}`} className="text-sm">
                           {String(row[col] || '-')}
                         </TableCell>
                       ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1} className="h-32 text-center text-muted-foreground">
+                      <p className="font-medium">No results found</p>
+                      <p className="text-xs opacity-70 mt-1">Try adjusting your search query.</p>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {summaryRows.map((row) => (
+                  <TableRow key={row.id} className="bg-primary/5 hover:bg-primary/10 transition-colors border-t-2 border-primary/20">
+                    <TableCell className="font-medium text-primary sticky left-0 bg-primary/5 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] text-xs">
+                      {row.isTotal ? 'Total' : '*'}
+                    </TableCell>
+                    {columns.map((col) => {
+                      const val = String(row[col] || '-')
+                      const isBold = val.toLowerCase() === 'total' || val.toLowerCase().includes('(kg)')
+                      return (
+                        <TableCell key={`${row.id}-${col}`} className={`text-sm ${isBold ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                          {val}
+                        </TableCell>
+                      )
+                    })}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {verifiedRowIds.size} of {uploadedData.length} rows verified
-          </p>
         </div>
 
         {/* Right Panel: QR Scanner */}

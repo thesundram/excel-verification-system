@@ -28,6 +28,8 @@ export interface VerificationContextType {
   resetAllData: () => void
   getVerificationStats: () => { total: number; verified: number; unverified: number }
   getRowByBatchAndSNO: (batchNo: string, sno: string) => ExcelRow | undefined
+  recentHistory: { batchNo: string, sno: string, timestamp: number, status: 'success' | 'warning' | 'error', scanData?: any }[]
+  addToHistory: (entry: { batchNo: string, sno: string, timestamp: number, status: 'success' | 'warning' | 'error', scanData?: any }) => void
 }
 
 const VerificationContext = createContext<VerificationContextType | undefined>(undefined)
@@ -36,6 +38,11 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
   const [uploadedData, setUploadedData] = useState<ExcelRow[]>([])
   const [verifiedRowIds, setVerifiedRowIds] = useState<Set<string>>(new Set())
   const [lastScannedQR, setLastScannedQR] = useState<QRData | null>(null)
+  const [recentHistory, setRecentHistory] = useState<{ batchNo: string, sno: string, timestamp: number, status: 'success' | 'warning' | 'error', scanData?: any }[]>([])
+
+  const addToHistory = useCallback((entry: { batchNo: string, sno: string, timestamp: number, status: 'success' | 'warning' | 'error', scanData?: any }) => {
+    setRecentHistory(prev => [entry, ...prev].slice(0, 10)); // Keep only the last 10 scans
+  }, []);
 
   const markRowAsVerified = useCallback((rowId: string, qrData: QRData) => {
     setVerifiedRowIds((prev) => new Set(prev).add(rowId))
@@ -60,6 +67,7 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
     setUploadedData([])
     setVerifiedRowIds(new Set())
     setLastScannedQR(null)
+    setRecentHistory([])
   }, [])
 
   const getVerificationStats = useCallback(() => {
@@ -92,6 +100,8 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
         resetAllData,
         getVerificationStats,
         getRowByBatchAndSNO,
+        recentHistory,
+        addToHistory,
       }}
     >
       {children}

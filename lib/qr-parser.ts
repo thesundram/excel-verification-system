@@ -156,8 +156,8 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
   }
 
   // Try parsing multiline text (key: value format)
-  if (qrValue.includes('\n') || qrValue.includes(':')) {
-    const lines = qrValue.split(/\r?\n/)
+  if (qrValue.includes('\n') || qrValue.includes('\r') || qrValue.includes(':')) {
+    const lines = qrValue.split(/\r\n|\r|\n/)
     const multilineParams: Record<string, string> = {}
     let foundKeyValue = false
 
@@ -191,10 +191,25 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
       const batchNo = getVal(['Batch No', 'Batch Number', 'Batch', 'Lot No', 'Lot'])
       const containerNo = getVal(['Container No', 'Container', 'Serial Shipping Container Code', 'SSCC'])
 
-      if (batchNo && containerNo) {
+      // Special handling for pharmaceutical data
+      const serialCode = getVal(['Serial Shipping Container Code'])
+      const finalContainerNo = containerNo || serialCode
+
+      if (batchNo && finalContainerNo) {
         return {
           batchNo,
-          containerNo,
+          containerNo: finalContainerNo,
+          rawValue: qrValue,
+          ...multilineParams
+        }
+      }
+
+      // Even if we didn't find strict Batch/container, if we found multiple key-values, 
+      // it's likely a valid object structure. Return what we found.
+      if (Object.keys(multilineParams).length > 2) {
+        return {
+          batchNo: batchNo || multilineParams[Object.keys(multilineParams)[0]] || 'Unknown',
+          containerNo: finalContainerNo || 'Unknown',
           rawValue: qrValue,
           ...multilineParams
         }
@@ -207,7 +222,7 @@ export function parseQRValue(qrValue: string): ParsedQRData | null {
   for (const delimiter of delimiters) {
     if (qrValue.includes(delimiter)) {
       const parts = qrValue.split(delimiter).map((p) => p.trim())
-      if (parts.length >= 2) {
+      if (parts.length >= 2 && parts.length <= 4) { // Limit parts to avoid matching long text
         return {
           batchNo: parts[0],
           containerNo: parts[1],
@@ -231,16 +246,16 @@ export function extractSNOFromContainer(containerNo: string): string {
     return parts[0].replace(/\D/g, '')
   }
 
-  // Handle raw digits or other formats
+  // For pharmaceutical SSCC (Serial Shipping Container Code)
   const digits = containerNo.replace(/\D/g, '')
 
-  // If it's a long SSCC (18 digits) or similar, returning first 2 digits is likely wrong for S.NO 
-  // unless specifically encoded. For now, return up to first 4 digits if short, or whole if strictly numeric?
-  // Let's stick to returning the digits found if it looks like a simple number, 
-  // or first few if it looks like a complex code?
-  // User's Excel likely has "1", "2", "3" or "01", "02".
-  // If we return "78905..." it won't match "01".
-  // But if the container no IS the SSCC in the excel, we want the whole thing.
+  // If it's a long SSCC (e.g. 18-digits), extract S.NO from last 2 digits like VeriScan Pro
+  if (digits.length >= 10) {
+    const lastTwo = digits.slice(-2)
+    return parseInt(lastTwo, 10).toString()
+  }
+
+  // For shorter codes, return as is
   return digits
 }
 
@@ -248,10 +263,10 @@ export function extractSNOFromContainer(containerNo: string): string {
  * Validate parsed QR data
  */
 export function validateParsedQR(data: ParsedQRData): { valid: boolean; error?: string } {
-  if (!data.batchNo || data.batchNo.length === 0) {
+  if (!data.batchNo || data.batchNo.length === 0 || data.batchNo === 'Unknown') {
     return { valid: false, error: 'Batch No is required' }
   }
-  if (!data.containerNo || data.containerNo.length === 0) {
+  if (!data.containerNo || data.containerNo.length === 0 || data.containerNo === 'Unknown') {
     return { valid: false, error: 'Container No is required' }
   }
   return { valid: true }
