@@ -89,8 +89,25 @@ export function parseQRValueFull(qrValue: string): AllQRData {
 
     if (foundKeyValue) {
       // keys usually appear as "Batch No", "Container No", "Serial Shipping Container Code"
-      const batchNo = findValue(['Batch No', 'Batch Number', 'Batch', 'Lot No', 'Lot'], multilineParams)
-      const containerNo = findValue(['Container No', 'Container', 'Serial Shipping Container Code', 'SSCC'], multilineParams)
+      let batchNo = findValue(['Batch No', 'Batch Number', 'Batch', 'Lot No', 'Lot'], multilineParams)
+      let containerNo = findValue(['Container No', 'Container', 'Serial Shipping Container Code', 'SSCC'], multilineParams)
+
+      // Try regex if not found via split (handles dirty string format without newlines)
+      if (!batchNo || !containerNo) {
+        const extractWithRegex = (keyRegex: RegExp, text: string): string | null => {
+          const match = text.match(keyRegex)
+          if (match && match[1]) {
+            return match[1].trim()
+          }
+          return null
+        }
+        
+        const batchRegex = /(?:Batch No|Batch Number)\s*:\s*([A-Za-z0-9]+)/i
+        const containerRegex = /(?:Serial Shipping Container Code|SSCC|Container No)\s*:\s*(\d+)/i
+        
+        batchNo = batchNo || extractWithRegex(batchRegex, rawValue) || undefined
+        containerNo = containerNo || extractWithRegex(containerRegex, rawValue) || undefined
+      }
 
       return {
         format: 'text',

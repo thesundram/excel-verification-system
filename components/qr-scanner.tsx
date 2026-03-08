@@ -12,7 +12,7 @@ import dynamic from 'next/dynamic'
 const BarcodeScanner = dynamic(() => import('react-qr-barcode-scanner'), { ssr: false })
 
 interface QRScannerProps {
-  onScan: (data: string) => void
+  onScan: (data: string, isManual?: boolean) => void
   isScanning: boolean
   setIsScanning: (active: boolean) => void
 }
@@ -48,7 +48,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
         setScannedValue(text)
         const parsed = parseQRValueFull(text)
         setParsedData(parsed)
-        onScan(text)
+        onScan(text, false)
 
         // Allow re-scanning the same code after 3 seconds
         setTimeout(() => {
@@ -68,15 +68,24 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
   const handleManualEntry = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const qrValue = (formData.get('qr-value') as string)?.trim()
+    const batchNo = (formData.get('batch-no') as string)?.trim()
+    const sNo = (formData.get('s-no') as string)?.trim()
 
-    if (qrValue) {
+    if (batchNo && sNo) {
+      // Use the standard delimited format that works best with parseQRValue
+      const qrValue = `${batchNo}-${sNo}`
       console.log('Manual QR entry submitted:', qrValue)
       setScannedValue(qrValue)
       const parsed = parseQRValueFull(qrValue)
       setParsedData(parsed)
-      onScan(qrValue)
+      onScan(qrValue, true)
       ;(e.target as HTMLFormElement).reset()
+      
+      // Focus back on the first input
+      setTimeout(() => {
+        const firstInput = (e.target as HTMLFormElement).querySelector('input')
+        if (firstInput) firstInput.focus()
+      }, 10)
     }
   }
 
@@ -147,6 +156,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
             width="100%"
             height="100%"
             facingMode={facingMode}
+            delay={100} // Increased scan frequency equivalent to Google Pay continuous scanning (10fps)
             onUpdate={handleUpdate}
             stopStream={stopStream}
           />
@@ -171,19 +181,28 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
         </div>
       )}
 
-      <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-        <label className="block text-sm font-medium text-foreground">Manual QR Entry</label>
-        <p className="text-xs text-muted-foreground mb-3">Paste or type QR code data directly.</p>
-        <form onSubmit={handleManualEntry} className="flex gap-2">
+      <div className="space-y-3 rounded-xl border border-primary/20 bg-card/60 backdrop-blur-sm p-5 shadow-sm">
+        <label className="block text-sm font-bold text-foreground">Manual Fast Entry</label>
+        <p className="text-xs font-medium text-muted-foreground mb-4">Type Batch No. and S.No directly to verify.</p>
+        <form onSubmit={handleManualEntry} className="flex flex-col sm:flex-row flex-wrap gap-3">
           <input
             type="text"
-            name="qr-value"
-            placeholder="Paste or type QR code value..."
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            name="batch-no"
+            placeholder="Batch Number"
+            className="flex-1 min-w-[140px] rounded-lg border-2 border-input bg-background/50 backdrop-blur-sm px-4 py-2.5 text-sm font-semibold text-foreground placeholder-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
             autoComplete="off"
+            required
           />
-          <Button type="submit" variant="secondary" size="sm">
-            Submit
+          <input
+            type="text"
+            name="s-no"
+            placeholder="Serial No. (S.No)"
+            className="flex-1 min-w-[140px] rounded-lg border-2 border-input bg-background/50 backdrop-blur-sm px-4 py-2.5 text-sm font-semibold text-foreground placeholder-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+            autoComplete="off"
+            required
+          />
+          <Button type="submit" className="w-full sm:w-auto py-2.5 h-auto shadow-md hover:shadow-lg transition-all font-bold whitespace-nowrap">
+            Verify Now
           </Button>
         </form>
       </div>

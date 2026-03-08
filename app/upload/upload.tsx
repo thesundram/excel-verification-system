@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
-import { Upload, CheckCircle, AlertCircle, Search } from 'lucide-react'
+import { Upload as UploadIcon, CheckCircle, AlertCircle, Search, ArrowRight, Activity } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export function UploadTab() {
+export function Upload() {
   const { setUploadedData, uploadedData } = useVerification()
   const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -97,40 +97,72 @@ export function UploadTab() {
           <SetupGuide />
         </div>
       )}
-
-      <div className="max-w-2xl">
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Upload Excel File</h2>
-        <p className="text-muted-foreground">Upload your Excel file to begin the verification process</p>
+      <div className="w-full mb-2">
+        <h2 className="mb-2 text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-accent drop-shadow-sm">Upload Dataset</h2>
+        <p className="text-lg font-medium text-muted-foreground/90">Drop your Excel file here to initialize the verification workflow.</p>
       </div>
 
-      <div
-        className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-6 sm:p-12 transition-colors hover:border-primary hover:bg-secondary"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleInputChange}
-          className="hidden"
-          disabled={isLoading}
-        />
-
-        <Upload className="mb-4 h-12 w-12 text-primary" />
-        <div className="mb-4 text-center">
-          <p className="mb-2 text-lg font-semibold text-foreground">Drag and drop your Excel file here</p>
-          <p className="text-sm text-muted-foreground">or</p>
-        </div>
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isLoading}
-          size="lg"
-          className="mb-4"
+      <div className="relative group w-full">
+        {/* Animated Background Glow */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/30 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-500" />
+        
+        <div
+          className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card/60 backdrop-blur-xl p-10 sm:p-20 transition-all duration-500 hover:bg-primary/[0.02] hover:border-primary w-full shadow-2xl overflow-hidden shadow-primary/5"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
         >
-          {isLoading ? 'Processing...' : 'Select File'}
-        </Button>
-        <p className="text-xs text-muted-foreground">Supported formats: .xlsx, .xls</p>
+          {/* Internal Glow Decor */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleInputChange}
+            className="hidden"
+            disabled={isLoading}
+          />
+
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl transition-transform group-hover:scale-150 duration-700" />
+            <div className="relative p-6 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl ring-1 ring-white/20 shadow-xl transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
+              <UploadIcon className="h-10 w-10 text-primary" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-sm">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+          </div>
+
+          <div className="mb-8 text-center space-y-2 relative z-10">
+            <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Deploy Data Source</p>
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] opacity-80">Drag components or browse local drive</p>
+          </div>
+
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            size="lg"
+            className="relative h-14 px-10 text-base font-black rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95 group/btn"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Activity className="h-4 w-4 animate-spin" />
+                Parsing Matrix...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Begin Upload <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+              </span>
+            )}
+          </Button>
+          
+          <div className="mt-8 flex items-center gap-6 opacity-40">
+            <span className="text-[10px] font-black tracking-widest uppercase">Type: .XLSX / .XLS</span>
+            <div className="h-1 w-1 rounded-full bg-muted-foreground" />
+            <span className="text-[10px] font-black tracking-widest uppercase">Max: 50MB</span>
+          </div>
+        </div>
       </div>
 
       {isLoading && (
@@ -184,7 +216,7 @@ export function UploadTab() {
                       </TableCell>
                       {columns.map((col) => (
                         <TableCell key={`${row.id}-${col}`} className="text-sm">
-                          {String(row[col] || '-')}
+                          {String((row as any)[col] || '-')}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -203,7 +235,7 @@ export function UploadTab() {
                       {row.isTotal ? 'Total' : '*'}
                     </TableCell>
                     {columns.map((col) => {
-                      const val = String(row[col] || '-')
+                      const val = String((row as any)[col] || '-')
                       const isBold = val.toLowerCase() === 'total' || val.toLowerCase().includes('(kg)')
                       return (
                         <TableCell key={`${row.id}-${col}`} className={`text-sm ${isBold ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>

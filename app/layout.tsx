@@ -10,7 +10,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Excel Verification System',
+  title: 'Verification System',
   description: 'Real-time batch verification through QR code scanning and Excel data matching',
   generator: 'Uttam Innovative Solution Pvt. Ltd.',
   icons: {

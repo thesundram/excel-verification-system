@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useVerification } from '@/lib/verification-context'
 import { QRScanner } from '@/components/qr-scanner'
 import { QRFormatGuide } from '@/components/qr-format-guide'
+import { Card } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { CheckCircle, AlertCircle, Search } from 'lucide-react'
@@ -18,8 +19,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export function VerificationTab() {
-  const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO, addToHistory } = useVerification()
+export function Verification() {
+  const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO, addToHistory, recentHistory } = useVerification()
   const [isScanning, setIsScanning] = useState(false)
   const [scannedCount, setScannedCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
@@ -61,15 +62,20 @@ export function VerificationTab() {
     } catch (e) {}
   }
 
-  const handleQRScan = useCallback(
-    (qrValue: string) => {
+  const handleScan = useCallback(
+    (qrValue: string, isManual: boolean = false) => {
+      if (uploadedData.length === 0) {
+        toast.error('No data uploaded. Please upload an Excel file first.')
+        return
+      }
+
       // Parse QR value to extract Batch No and Container No
       const parsedQR = parseQRValue(qrValue)
 
       if (!parsedQR) {
         playErrorSound()
-        toast.error('Invalid QR format. Expected format: BATCH-CONTAINER or JSON with batch/container fields.')
-        addToHistory({ batchNo: 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { rawValue: qrValue } })
+        toast.error('Invalid QR Code Format')
+        addToHistory({ batchNo: 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         return
       }
 
@@ -77,8 +83,8 @@ export function VerificationTab() {
       const validation = validateParsedQR(parsedQR)
       if (!validation.valid) {
         playErrorSound()
-        toast.error(validation.error || 'Invalid QR data')
-        addToHistory({ batchNo: parsedQR.batchNo || 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue } })
+        toast.error(`Invalid QR Data: ${validation.error}`)
+        addToHistory({ batchNo: parsedQR.batchNo || 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         return
       }
 
@@ -96,7 +102,7 @@ export function VerificationTab() {
         'Batch No': batchNo,
         'S.NO': sno,
         'Container No': containerNo,
-        ...parsedQR.parameters,
+        ...((parsedQR as any).parameters || {}),
         timestamp: Date.now()
       }
       
@@ -110,8 +116,8 @@ export function VerificationTab() {
       if (matchingRow) {
         if (matchingRow.verified) {
             playErrorSound()
-            toast.warning(`Already Verified: Row ${matchingRow['S.NO']} was already scanned.`)
-            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue } })
+            toast.warning(`Already Verified: Row ${sno} was already scanned.`)
+            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         } else {
             markRowAsVerified(matchingRow.id, {
             'Batch No': batchNo,
@@ -119,24 +125,28 @@ export function VerificationTab() {
             'Container No': containerNo,
             ...parsedQR,
             timestamp: Date.now(),
-            })
+            }, isManual ? 'manual' : 'qr')
             setScannedCount((prev) => prev + 1)
             playSuccessSound()
-            toast.success(`Successfully matched! Row ${matchingRow['S.NO']} verified.`)
-            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'success', scanData: { ...parsedQR, rawValue: qrValue } })
+            toast.success(`Successfully matched! Row ${sno} verified.`)
+            addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'success', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         }
       } else {
-        // Check if at least Batch No exists in the uploaded data
-        // @ts-ignore
-        const batchExists = uploadedData.some(row => row['Batch no']?.toString().replace(/\s/g, '').toLowerCase() === batchNo.replace(/\s/g, '').toLowerCase())
+        // Find if batch exists loosely
+        const batchExists = uploadedData.some(row => {
+          const rowKeys = Object.keys(row)
+          const batchKey = rowKeys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === 'batchno' || k.toLowerCase().replace(/[^a-z0-9]/g, '') === 'batchnumber')
+          if (!batchKey) return false
+          return row[batchKey as keyof typeof row]?.toString().replace(/\s/g, '').toLowerCase() === batchNo.replace(/\s/g, '').toLowerCase()
+        })
 
         playErrorSound()
         if (batchExists) {
           toast.warning(`Partial Match: Batch found (${batchNo}) but S.NO (${sno}) does not match any unverified row.`)
-          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue } })
+          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         } else {
           toast.error(`Not Found: No matching row found for Batch: ${batchNo}`)
-          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue } })
+          addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         }
       }
     },
@@ -164,26 +174,50 @@ export function VerificationTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Verification</h2>
-        <p className="text-muted-foreground">
-          Scan QR codes to match against your Excel data. Matched rows will be highlighted green.
+      <div className="max-w-3xl mb-2">
+        <h2 className="mb-2 text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-accent drop-shadow-sm">Verification Workstation</h2>
+        <p className="text-lg font-medium text-muted-foreground/90">
+          Scan or enter QR codes to match against your active dataset. Authenticated items will be marked automatically.
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Scans Completed</p>
-          <p className="text-2xl font-bold text-foreground">{scannedCount}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Total Rows</p>
-          <p className="text-2xl font-bold text-foreground">{uploadedData.length}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Remaining</p>
-          <p className="text-2xl font-bold text-foreground">{uploadedData.length - scannedCount}</p>
-        </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        {/* Scans Completed Card */}
+        <Card className="relative overflow-hidden border-primary/20 bg-card/60 backdrop-blur-md p-6 transition-all hover:shadow-xl hover:border-primary/40 group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-8 -mt-8" />
+          <div className="relative z-10">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Scans Completed
+            </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-5xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">{scannedCount}</span>
+              <span className="text-sm font-bold text-muted-foreground uppercase">Units</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Total Dataset Card */}
+        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-6 group">
+          <div className="relative z-10">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Dataset</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-5xl font-black text-foreground tracking-tighter">{uploadedData.length}</span>
+              <span className="text-sm font-bold text-muted-foreground uppercase">Rows</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Pending Authentication Card */}
+        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-6 group">
+          <div className="relative z-10">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">Pending Authentication</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-5xl font-black text-foreground tracking-tighter">{uploadedData.length - scannedCount}</span>
+              <span className="text-sm font-bold text-muted-foreground uppercase">Remaining</span>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
@@ -221,7 +255,7 @@ export function VerificationTab() {
               </TableHeader>
               <TableBody>
                 {filteredData.length > 0 ? (
-                  filteredData.map((row, idx) => (
+                   filteredData.map((row, idx) => (
                     <TableRow
                       key={row.id}
                       className={`transition-colors ${row.verified
@@ -234,7 +268,7 @@ export function VerificationTab() {
                       </TableCell>
                       {columns.map((col) => (
                         <TableCell key={`${row.id}-${col}`} className="text-sm">
-                          {String(row[col] || '-')}
+                          {String(row[col as keyof typeof row] || '-')}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -253,7 +287,7 @@ export function VerificationTab() {
                       {row.isTotal ? 'Total' : '*'}
                     </TableCell>
                     {columns.map((col) => {
-                      const val = String(row[col] || '-')
+                      const val = String(row[col as keyof typeof row] || '-')
                       const isBold = val.toLowerCase() === 'total' || val.toLowerCase().includes('(kg)')
                       return (
                         <TableCell key={`${row.id}-${col}`} className={`text-sm ${isBold ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
@@ -271,26 +305,33 @@ export function VerificationTab() {
         {/* Right Panel: QR Scanner */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">QR Code Scanner</h3>
-          <QRScanner onScan={handleQRScan} isScanning={isScanning} setIsScanning={setIsScanning} />
+          <QRScanner onScan={handleScan} isScanning={isScanning} setIsScanning={setIsScanning} />
           <QRFormatGuide />
         </div>
       </div>
 
       {lastScannedQR && (
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h4 className="mb-3 font-semibold text-foreground">Last Scanned Data</h4>
-          <div className="space-y-2 font-mono text-sm">
+        <div className="rounded-2xl border border-primary/20 bg-card/60 backdrop-blur-md p-5 shadow-lg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 opacity-50" />
+          <h4 className="mb-4 font-extrabold text-foreground flex items-center justify-between relative z-10">
+            <span>Last Scanned Data</span>
+            <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20">
+               {(recentHistory.length > 0 && recentHistory[0].batchNo === lastScannedQR['Batch No'] && recentHistory[0].type === 'manual') ? 'Manual Verify' : 'QR Verify'}
+            </span>
+          </h4>
+          <div className="space-y-2.5 font-mono text-sm relative z-10">
             {Object.entries(lastScannedQR)
-              .filter(([key]) => key !== 'timestamp' && key !== 'rawValue')
+              .filter(([key]) => key !== 'timestamp' && key !== 'rawValue' && key !== 'verificationType')
               .map(([key, value]) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:justify-between border-b border-border/50 pb-1 last:border-0">
-                  <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
-                  <span className="font-semibold text-foreground break-all text-right">{String(value)}</span>
+                <div key={key} className="flex justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                  <span className="font-semibold text-muted-foreground uppercase text-xs tracking-wider">{key}:</span>
+                  <span className="font-bold text-foreground text-right">{String(value)}</span>
                 </div>
               ))}
-            <p className="text-xs text-muted-foreground pt-2">
-              Scanned at: {new Date(lastScannedQR.timestamp).toLocaleTimeString()}
-            </p>
+            <div className="pt-2 text-xs font-semibold text-muted-foreground mt-2 border-t border-border/50 flex justify-between items-center">
+              <span>Scanned at:</span>
+              <span className="text-foreground">{new Date(lastScannedQR.timestamp).toLocaleTimeString()}</span>
+            </div>
           </div>
         </div>
       )}
