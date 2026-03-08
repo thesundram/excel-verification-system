@@ -7,7 +7,18 @@ export function Header() {
   const [time, setTime] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    const updateTime = () => {
+      setTime(new Date().toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+      }))
+    }
+    
+    updateTime()
+    const timer = setInterval(updateTime, 1000)
+    return () => clearInterval(timer)
   }, [])
 
   return (
