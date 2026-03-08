@@ -181,40 +181,40 @@ export function Verification() {
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {/* Scans Completed Card */}
-        <Card className="relative overflow-hidden border-primary/20 bg-card/60 backdrop-blur-md p-6 transition-all hover:shadow-xl hover:border-primary/40 group">
+        <Card className="relative overflow-hidden border-primary/20 bg-card/60 backdrop-blur-md p-4 sm:p-6 transition-all hover:shadow-xl hover:border-primary/40 group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-8 -mt-8" />
           <div className="relative z-10">
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+            <p className="text-[9px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 sm:mb-3 flex items-center gap-2">
               <CheckCircle className="h-3.5 w-3.5" />
               Scans Completed
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-5xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">{scannedCount}</span>
-              <span className="text-sm font-bold text-muted-foreground uppercase">Units</span>
+              <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">{scannedCount}</span>
+              <span className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase">Units</span>
             </div>
           </div>
         </Card>
 
         {/* Total Dataset Card */}
-        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-6 group">
+        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-4 sm:p-6 group">
           <div className="relative z-10">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Dataset</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 sm:mb-3">Total Dataset</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-5xl font-black text-foreground tracking-tighter">{uploadedData.length}</span>
-              <span className="text-sm font-bold text-muted-foreground uppercase">Rows</span>
+              <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter">{uploadedData.length}</span>
+              <span className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase">Rows</span>
             </div>
           </div>
         </Card>
 
         {/* Pending Authentication Card */}
-        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-6 group">
+        <Card className="relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-sm p-4 sm:p-6 group sm:col-span-2 lg:col-span-1">
           <div className="relative z-10">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">Pending Authentication</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 sm:mb-3">Pending Authentication</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-5xl font-black text-foreground tracking-tighter">{uploadedData.length - scannedCount}</span>
-              <span className="text-sm font-bold text-muted-foreground uppercase">Remaining</span>
+              <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter">{uploadedData.length - scannedCount}</span>
+              <span className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase">Remaining</span>
             </div>
           </div>
         </Card>
@@ -222,32 +222,32 @@ export function Verification() {
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Left Panel: Excel Data Table */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4 order-2 lg:order-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Uploaded Data</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-base sm:text-lg font-bold text-foreground">Uploaded Data</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {verifiedRowIds.size} of {uploadedData.length} rows verified
               </p>
             </div>
-            <div className="relative w-full sm:max-w-sm">
+            <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search data..."
-                className="pl-9 bg-background focus:ring-primary focus:border-primary"
+                className="pl-9 h-9 text-sm bg-background/50 focus:ring-primary focus:border-primary"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
-          <div className="relative w-full overflow-auto max-h-[60vh] rounded-lg border border-border bg-card shadow-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+          <div className="relative w-full overflow-auto max-h-[50vh] sm:max-h-[60vh] rounded-xl border border-border bg-card/50 backdrop-blur-sm shadow-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             <Table className="relative w-full whitespace-nowrap">
               <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 shadow-sm border-b">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold w-16 sticky left-0 bg-muted/95 z-20">Row</TableHead>
+                  <TableHead className="font-bold w-12 sm:w-16 sticky left-0 bg-muted/95 z-20 text-[10px] sm:text-xs">Row</TableHead>
                   {columns.map((col) => (
-                    <TableHead key={col} className="font-semibold text-xs uppercase tracking-wider">
+                    <TableHead key={col} className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">
                       {col}
                     </TableHead>
                   ))}

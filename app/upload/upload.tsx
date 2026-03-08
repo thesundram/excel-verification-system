@@ -107,7 +107,7 @@ export function Upload() {
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/30 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-500" />
         
         <div
-          className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card/60 backdrop-blur-xl p-10 sm:p-20 transition-all duration-500 hover:bg-primary/[0.02] hover:border-primary w-full shadow-2xl overflow-hidden shadow-primary/5"
+          className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/30 bg-card/60 backdrop-blur-xl p-6 sm:p-10 md:p-20 transition-all duration-500 hover:bg-primary/[0.02] hover:border-primary w-full shadow-2xl overflow-hidden shadow-primary/5"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
@@ -124,43 +124,43 @@ export function Upload() {
             disabled={isLoading}
           />
 
-          <div className="relative mb-8">
+          <div className="relative mb-6 sm:mb-8">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl transition-transform group-hover:scale-150 duration-700" />
-            <div className="relative p-6 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl ring-1 ring-white/20 shadow-xl transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
-              <UploadIcon className="h-10 w-10 text-primary" />
+            <div className="relative p-4 sm:p-6 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl sm:rounded-3xl ring-1 ring-white/20 shadow-xl transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
+              <UploadIcon className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
             </div>
-            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-sm">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-background border border-border shadow-sm">
+              <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
           </div>
 
-          <div className="mb-8 text-center space-y-2 relative z-10">
-            <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Deploy Data Source</p>
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] opacity-80">Drag components or browse local drive</p>
+          <div className="mb-6 sm:mb-8 text-center space-y-1 sm:space-y-2 relative z-10">
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-foreground tracking-tight">Deploy Data Source</p>
+            <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-[0.2em] sm:tracking-[0.3em] opacity-80">Drag components or browse local drive</p>
           </div>
 
           <Button
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             size="lg"
-            className="relative h-14 px-10 text-base font-black rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95 group/btn"
+            className="relative h-12 sm:h-14 px-8 sm:px-10 text-sm sm:text-base font-black rounded-xl sm:rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95 group/btn w-full sm:w-auto"
           >
             {isLoading ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 justify-center">
                 <Activity className="h-4 w-4 animate-spin" />
                 Parsing Matrix...
               </span>
             ) : (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 justify-center">
                 Begin Upload <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
               </span>
             )}
           </Button>
           
-          <div className="mt-8 flex items-center gap-6 opacity-40">
-            <span className="text-[10px] font-black tracking-widest uppercase">Type: .XLSX / .XLS</span>
-            <div className="h-1 w-1 rounded-full bg-muted-foreground" />
-            <span className="text-[10px] font-black tracking-widest uppercase">Max: 50MB</span>
+          <div className="mt-6 sm:mt-8 flex flex-wrap justify-center items-center gap-3 sm:gap-6 opacity-40">
+            <span className="text-[8px] sm:text-[10px] font-black tracking-widest uppercase">Type: .XLSX / .XLS</span>
+            <div className="hidden sm:block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+            <span className="text-[8px] sm:text-[10px] font-black tracking-widest uppercase text-center w-full sm:w-auto">Max Recommended: 50MB</span>
           </div>
         </div>
       </div>

@@ -106,18 +106,18 @@ export function Dashboard() {
       {/* Top Banner / Export Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Project Overview</h2>
-          <p className="text-sm font-medium text-muted-foreground mt-1 uppercase tracking-widest">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Project Overview</h2>
+          <p className="text-[10px] sm:text-sm font-bold text-muted-foreground mt-1 uppercase tracking-[0.2em]">
             {new Date().toLocaleString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={handleExport} variant="outline" className="h-10 border-border shadow-sm hover:shadow-md transition-shadow" title="Export Verification Data as CSV">
-            <Download className="mr-2 h-4 w-4" />
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <Button onClick={handleExport} variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm border-border shadow-sm hover:shadow-md transition-shadow flex-1 sm:flex-none" title="Export Verification Data as CSV">
+            <Download className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Export CSV
           </Button>
-          <Button onClick={handleReset} variant="outline" className="h-10 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive shadow-sm transition-all  hover:text-destructive" title="Reset All Data and History">
-            <RotateCcw className="mr-2 h-4 w-4" />
+          <Button onClick={handleReset} variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive shadow-sm transition-all hover:text-destructive flex-1 sm:flex-none" title="Reset All Data and History">
+            <RotateCcw className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Reset
           </Button>
         </div>
@@ -126,30 +126,30 @@ export function Dashboard() {
       {/* Hero Completion Bar */}
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20 rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-        <Card className="p-6 md:p-8 bg-card/90 backdrop-blur-xl shadow-lg border-primary/20 relative overflow-hidden ring-1 ring-border/50">
+        <Card className="p-5 sm:p-8 bg-card/90 backdrop-blur-xl shadow-lg border-primary/20 relative overflow-hidden ring-1 ring-border/50">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
 
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 relative z-10 gap-6">
             <div>
-              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
+              <h3 className="text-[10px] sm:text-sm font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                 Completion Status
               </h3>
               <div className="flex items-baseline">
-                <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/70 tracking-tighter drop-shadow-sm">{verificationPercentage}</span>
-                <span className="text-2xl font-bold text-primary ml-1 drop-shadow-sm">%</span>
+                <span className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/70 tracking-tighter drop-shadow-sm">{verificationPercentage}</span>
+                <span className="text-xl sm:text-2xl font-bold text-primary ml-1 drop-shadow-sm">%</span>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-foreground tracking-tight">
-                {stats.verified} <span className="text-xl text-muted-foreground font-medium">/ {stats.total}</span>
+            <div className="text-left md:text-right">
+              <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                {stats.verified} <span className="text-lg sm:text-xl text-muted-foreground font-medium">/ {stats.total}</span>
               </p>
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-1">Items Authenticated</p>
+              <p className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase tracking-widest mt-1">Items Authenticated</p>
             </div>
           </div>
 
-          <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative z-10 ring-1 ring-inset ring-black/10 dark:ring-white/10 shadow-inner">
+          <div className="h-3 sm:h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative z-10 ring-1 ring-inset ring-black/10 dark:ring-white/10 shadow-inner">
             <div
               className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-1000 ease-out rounded-full relative"
               style={{ width: `${verificationPercentage}%` }}
@@ -161,51 +161,51 @@ export function Dashboard() {
       </div>
 
       {/* Metric Cards Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {/* Total Rows Card */}
-        <Card className="flex flex-col items-center text-center p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-blue-500/30 hover:-translate-y-1 group">
-          <div className="rounded-2xl bg-blue-500/10 p-4 mb-4 group-hover:bg-blue-500/20 transition-colors">
-            <FileText className="h-6 w-6 text-blue-500" />
+        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-blue-500/30 hover:-translate-y-1 group">
+          <div className="rounded-xl sm:rounded-2xl bg-blue-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-blue-500/20 transition-colors">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
           </div>
-          <p className="text-4xl font-extrabold text-foreground mb-1 tracking-tight">{stats.total}</p>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Items</p>
+          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.total}</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Items</p>
         </Card>
 
         {/* Verified Rows Card */}
-        <Card className="flex flex-col items-center text-center p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-emerald-500/30 hover:-translate-y-1 group">
-          <div className="rounded-2xl bg-emerald-500/10 p-4 mb-4 group-hover:bg-emerald-500/20 transition-colors">
-            <CheckCircle className="h-6 w-6 text-emerald-500" />
+        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-emerald-500/30 hover:-translate-y-1 group">
+          <div className="rounded-xl sm:rounded-2xl bg-emerald-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-emerald-500/20 transition-colors">
+            <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500" />
           </div>
-          <p className="text-4xl font-extrabold text-foreground mb-1 tracking-tight">{stats.verified}</p>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Verified</p>
+          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.verified}</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Verified</p>
         </Card>
 
         {/* Unverified Rows Card */}
-        <Card className="flex flex-col items-center text-center p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-amber-500/30 hover:-translate-y-1 group">
-          <div className="rounded-2xl bg-amber-500/10 p-4 mb-4 group-hover:bg-amber-500/20 transition-colors">
-            <Clock className="h-6 w-6 text-amber-500" />
+        <Card className="flex flex-col items-center text-center p-5 sm:p-6 shadow-sm border-border/50 bg-card/60 backdrop-blur-md transition-all hover:shadow-lg hover:border-amber-500/30 hover:-translate-y-1 group sm:col-span-2 lg:col-span-1">
+          <div className="rounded-xl sm:rounded-2xl bg-amber-500/10 p-3 sm:p-4 mb-3 sm:mb-4 group-hover:bg-amber-500/20 transition-colors">
+            <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
           </div>
-          <p className="text-4xl font-extrabold text-foreground mb-1 tracking-tight">{stats.unverified}</p>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pending</p>
+          <p className="text-3xl sm:text-4xl font-black text-foreground mb-1 tracking-tight">{stats.unverified}</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pending</p>
         </Card>
       </div>
 
       {/* Completion Message */}
       {stats.unverified === 0 && stats.total > 0 && (
-        <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 backdrop-blur-sm p-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-inner">
-          <CheckCircle className="mx-auto mb-3 h-12 w-12 text-emerald-500 drop-shadow-md" />
-          <h4 className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">All Items Verified!</h4>
-          <p className="mt-2 text-sm font-medium text-emerald-600/80 dark:text-emerald-400/80">
-            You have successfully verified all <span className="font-bold">{stats.total}</span> items in your batch.
+        <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 backdrop-blur-sm p-5 sm:p-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-inner">
+          <CheckCircle className="mx-auto mb-2 sm:mb-3 h-10 w-10 sm:h-12 sm:w-12 text-emerald-500 drop-shadow-md" />
+          <h4 className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">All Items Verified!</h4>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm font-bold text-emerald-600/80 dark:text-emerald-400/80">
+            You have successfully verified all <span className="font-black">{stats.total}</span> items in your batch.
           </p>
         </Card>
       )}
 
       {/* Recent Activity List */}
       <div className="space-y-4 pt-4">
-        <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
+        <h3 className="text-xl sm:text-2xl font-black text-foreground flex items-center gap-2">
           <span>Recent Activity</span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+          <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] sm:text-xs font-black text-primary">
             {recentHistory.length}
           </span>
         </h3>
