@@ -7,9 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { AlertCircle, Camera, X, CheckCircle2, RefreshCw } from 'lucide-react'
 import { parseQRValueFull } from '@/lib/qr-parser'
-import dynamic from 'next/dynamic'
-
-const BarcodeScanner = dynamic(() => import('react-qr-barcode-scanner'), { ssr: false })
+import QrScanner from 'qr-scanner'
 
 interface QRScannerProps {
   onScan: (data: string, isManual?: boolean) => void
@@ -22,48 +20,68 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
   const [scannedValue, setScannedValue] = useState<string | null>(null)
   const [parsedData, setParsedData] = useState<ReturnType<typeof parseQRValueFull> | null>(null)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
-  const [stopStream, setStopStream] = useState(false)
   const scannedCodesRef = useRef<Set<string>>(new Set())
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const scannerRef = useRef<QrScanner | null>(null)
 
-  // Ensure stream stops when component unmounts or stops scanning
+  // Start/Stop scanner logic
   useEffect(() => {
-    if (!isScanning) {
-      setStopStream(true)
-    } else {
-      setStopStream(false)
-      setCameraError(null)
-    }
-    
-    return () => {
-       setStopStream(true)
-    }
-  }, [isScanning])
-
-  const handleUpdate = useCallback((err: any, result: any) => {
-    if (result) {
-      const text = result.getText ? result.getText() : result.text
-      if (text && !scannedCodesRef.current.has(text)) {
-        console.log('QR Code detected:', text)
-        scannedCodesRef.current.add(text)
-        setScannedValue(text)
-        const parsed = parseQRValueFull(text)
-        setParsedData(parsed)
-        onScan(text, false)
-
-        // Allow re-scanning the same code after 3 seconds
-        setTimeout(() => {
-          if (scannedCodesRef.current) {
-            scannedCodesRef.current.delete(text)
-          }
-        }, 3000)
+    if (isScanning && videoRef.current) {
+      if (scannerRef.current) {
+        scannerRef.current.destroy()
       }
-    } else if (err) {
-       // Only handle actual camera errors like permissions, skip NotFound errors
-       if (err.name === 'NotAllowedError') {
-         setCameraError('Camera access denied. Please allow permissions.')
-       }
+
+      scannerRef.current = new QrScanner(
+        videoRef.current,
+        (result) => {
+          const text = result.data
+          if (text && !scannedCodesRef.current.has(text)) {
+            console.log('QR Code detected:', text)
+            scannedCodesRef.current.add(text)
+            setScannedValue(text)
+            const parsed = parseQRValueFull(text)
+            setParsedData(parsed)
+            onScan(text, false)
+
+            // Allow re-scanning the same code after 3 seconds
+            setTimeout(() => {
+              if (scannedCodesRef.current) {
+                scannedCodesRef.current.delete(text)
+              }
+            }, 3000)
+          }
+        },
+        {
+          onDecodeError: (error) => {
+            if (error !== 'No QR code found') {
+              console.debug(error)
+            }
+          },
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
+          preferredCamera: facingMode,
+          maxScansPerSecond: 10,
+        }
+      )
+
+      scannerRef.current
+        .start()
+        .then(() => {
+           setCameraError(null)
+        })
+        .catch((err) => {
+          console.error('Failed to start scanner:', err)
+          setCameraError('Camera access denied or device issue.')
+        })
     }
-  }, [onScan])
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.destroy()
+        scannerRef.current = null
+      }
+    }
+  }, [isScanning, facingMode, onScan])
 
   const handleManualEntry = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -79,8 +97,8 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
       const parsed = parseQRValueFull(qrValue)
       setParsedData(parsed)
       onScan(qrValue, true)
-      ;(e.target as HTMLFormElement).reset()
-      
+        ; (e.target as HTMLFormElement).reset()
+
       // Focus back on the first input
       setTimeout(() => {
         const firstInput = (e.target as HTMLFormElement).querySelector('input')
@@ -100,7 +118,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
   }
 
   const handleCameraSwitch = () => {
-    setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'))
+    setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
     scannedCodesRef.current.clear()
   }
 
@@ -127,13 +145,12 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
         >
           <div className="absolute inset-0 bg-white/20 px-2 translate-x-[-100%] skew-x-12 group-hover:translate-x-[200%] transition-transform duration-1000 ease-in-out" />
           <Camera className="mr-2 h-5 w-5" />
-          <span className="uppercase tracking-widest text-xs">Start Camera Scanner</span>
+          <span className="uppercase tracking-widest text-xs">Start HD Camera Scanner</span>
         </Button>
       ) : (
         <Button
           onClick={() => {
-            setStopStream(true)
-            setTimeout(() => setIsScanning(false), 0)
+            setIsScanning(false)
           }}
           variant="outline"
           size="lg"
@@ -153,13 +170,9 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
 
       {isScanning && !cameraError && (
         <div className="relative w-full overflow-hidden rounded-lg border-2 border-primary bg-black flex items-center justify-center min-h-[400px]">
-          <BarcodeScanner
-            width="100%"
-            height="100%"
-            facingMode={facingMode}
-            delay={100} // Increased scan frequency equivalent to Google Pay continuous scanning (10fps)
-            onUpdate={handleUpdate}
-            stopStream={stopStream}
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover min-h-[400px]"
           />
           <Button
             variant="secondary"
@@ -262,20 +275,20 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {parsedData.batchNo && (
-                     <div className="rounded-md bg-primary/10 p-2">
-                       <p className="text-xs font-medium text-primary">Batch No</p>
-                       <p className="font-mono text-sm font-semibold text-foreground">
-                         {parsedData.batchNo}
-                       </p>
-                     </div>
+                    <div className="rounded-md bg-primary/10 p-2">
+                      <p className="text-xs font-medium text-primary">Batch No</p>
+                      <p className="font-mono text-sm font-semibold text-foreground">
+                        {parsedData.batchNo}
+                      </p>
+                    </div>
                   )}
                   {parsedData.containerNo && (
-                     <div className="rounded-md bg-accent/10 p-2">
-                       <p className="text-xs font-medium text-accent">Container No</p>
-                       <p className="font-mono text-sm font-semibold text-foreground">
-                         {parsedData.containerNo}
-                       </p>
-                     </div>
+                    <div className="rounded-md bg-accent/10 p-2">
+                      <p className="text-xs font-medium text-accent">Container No</p>
+                      <p className="font-mono text-sm font-semibold text-foreground">
+                        {parsedData.containerNo}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
