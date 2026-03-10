@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { CheckCircle, AlertCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { parseQRValue, extractSNOFromContainer, validateParsedQR } from '@/lib/qr-parser'
+import { audioManager } from '@/lib/audio-manager'
 import {
   Table,
   TableBody,
@@ -21,7 +22,6 @@ import {
 export function Verification() {
   const { uploadedData, markRowAsVerified, lastScannedQR, setLastScannedQR, getRowByBatchAndSNO, addToHistory, recentHistory } = useVerification()
   const [isScanning, setIsScanning] = useState(false)
-  const [scannedCount, setScannedCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
 
   const isSummaryRow = (row: Record<string, any>) => {
@@ -53,21 +53,6 @@ export function Verification() {
 
   const columns = uploadedData.length > 0 ? Object.keys(uploadedData[0]).filter((k) => k !== 'id' && k !== 'verified') : []
 
-
-  const playSuccessSound = () => {
-    try {
-      const audio = new Audio('/success.mp3') // Assume exist or fallback to generic beep
-      audio.play().catch(() => {})
-    } catch (e) {}
-  }
-
-  const playErrorSound = () => {
-    try {
-      const audio = new Audio('/error.mp3')
-      audio.play().catch(() => {})
-    } catch (e) {}
-  }
-
   const handleScan = useCallback(
     (qrValue: string, isManual: boolean = false) => {
       if (uploadedData.length === 0) {
@@ -79,7 +64,7 @@ export function Verification() {
       const parsedQR = parseQRValue(qrValue)
 
       if (!parsedQR) {
-        playErrorSound()
+        audioManager.playError()
         toast.error('Invalid QR Code Format')
         addToHistory({ batchNo: 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         return
@@ -88,7 +73,7 @@ export function Verification() {
       // Validate parsed QR data
       const validation = validateParsedQR(parsedQR)
       if (!validation.valid) {
-        playErrorSound()
+        audioManager.playError()
         toast.error(`Invalid QR Data: ${validation.error}`)
         addToHistory({ batchNo: parsedQR.batchNo || 'Unknown', sno: 'Unknown', timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         return
@@ -121,7 +106,7 @@ export function Verification() {
 
       if (matchingRow) {
         if (matchingRow.verified) {
-            playErrorSound()
+            audioManager.playWarning()
             toast.warning(`Already Verified: Row ${sno} was already scanned.`)
             addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         } else {
@@ -132,8 +117,7 @@ export function Verification() {
             ...parsedQR,
             timestamp: Date.now(),
             }, isManual ? 'manual' : 'qr')
-            setScannedCount((prev) => prev + 1)
-            playSuccessSound()
+            audioManager.playSuccess()
             toast.success(`Successfully matched! Row ${sno} verified.`)
             addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'success', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         }
@@ -146,11 +130,12 @@ export function Verification() {
           return row[batchKey as keyof typeof row]?.toString().replace(/\s/g, '').toLowerCase() === batchNo.replace(/\s/g, '').toLowerCase()
         })
 
-        playErrorSound()
         if (batchExists) {
+          audioManager.playWarning()
           toast.warning(`Partial Match: Batch found (${batchNo}) but S.NO (${sno}) does not match any unverified row.`)
           addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'warning', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         } else {
+          audioManager.playError()
           toast.error(`Not Found: No matching row found for Batch: ${batchNo}`)
           addToHistory({ batchNo, sno, timestamp: Date.now(), status: 'error', scanData: { ...parsedQR, rawValue: qrValue }, type: isManual ? 'manual' : 'qr' })
         }
@@ -163,6 +148,8 @@ export function Verification() {
     () => new Set(uploadedData.filter((r) => r.verified).map((r) => r.id)),
     [uploadedData]
   )
+
+  const scannedCount = verifiedRowIds.size
 
   if (uploadedData.length === 0) {
     return (
@@ -219,7 +206,7 @@ export function Verification() {
           <div className="relative z-10">
             <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 sm:mb-3">Pending Authentication</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter">{uploadedData.length - scannedCount}</span>
+              <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter">{Math.max(0, uploadedData.length - scannedCount)}</span>
               <span className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase">Remaining</span>
             </div>
           </div>
