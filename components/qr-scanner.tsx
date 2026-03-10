@@ -23,6 +23,12 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
   const scannedCodesRef = useRef<Set<string>>(new Set())
   const videoRef = useRef<HTMLVideoElement>(null)
   const scannerRef = useRef<QrScanner | null>(null)
+  const onScanRef = useRef(onScan)
+
+  // Keep onScanRef updated without causing re-renders
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
 
   // Start/Stop scanner logic
   useEffect(() => {
@@ -41,7 +47,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
             setScannedValue(text)
             const parsed = parseQRValueFull(text)
             setParsedData(parsed)
-            onScan(text, false)
+            onScanRef.current(text, false)
 
             // Allow re-scanning the same code after 3 seconds
             setTimeout(() => {
@@ -81,7 +87,7 @@ export function QRScanner({ onScan, isScanning, setIsScanning }: QRScannerProps)
         scannerRef.current = null
       }
     }
-  }, [isScanning, facingMode, onScan])
+  }, [isScanning, facingMode])
 
   const handleManualEntry = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
