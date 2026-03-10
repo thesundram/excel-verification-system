@@ -326,7 +326,7 @@ export function Dashboard() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedEntry} onOpenChange={(open) => !open && setSelectedEntry(null)}>
-        <DialogContent className="max-w-md border-border bg-card">
+        <DialogContent className="max-w-md border-border bg-card max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedEntry?.status === 'success' ? <CheckCircle className="text-emerald-500 h-5 w-5" /> :
